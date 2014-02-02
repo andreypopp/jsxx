@@ -83,7 +83,7 @@ function visitReactTag(traverse, object, path, state) {
             child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
   });
 
-  if (object.name.name === 'template') {
+  if (object.name.name === 'template' && !object.name.namespace) {
 
     utils.move(object.openingElement.range[1], state);
     utils.append('function(state, props) { return [', state);
