@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+var fs = require('fs');
+var transform = require('./stream');
+
+var src = process.argv[2] ?
+          fs.createReadStream(process.argv[2], 'utf8') :
+          process.stdin;
+
+src.pipe(transform(process.argv[2])).pipe(process.stdout);
