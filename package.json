@@ -7,7 +7,8 @@
   "dependencies": {
     "esprima-fb": "~2001.1001.0-dev-harmony-fb",
     "jstransform": "~2.0.3",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "reactify": "~0.6.1"
   },
   "devDependencies": {
     "semver": "~2.2.1"
