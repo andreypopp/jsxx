@@ -2,5 +2,5 @@
  * @jsx React.DOM
  */
 var x = (
-  <div>Hello</div>
+  <div><template>Hello</template></div>
 );
