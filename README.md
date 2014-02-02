@@ -3,6 +3,10 @@
 JSX eXperimental. It adds few features to [JSX][jsx] language used in
 [React][react].
 
+## Namespaces supports
+
+So `<module:component />` compiles to `module.component(null)`.
+
 ## `<template>` element
 
 jsxx handles `<template>` element by compiling it to a function which accepts
