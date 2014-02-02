@@ -5,8 +5,9 @@ REPONAME = $(shell echo $(REPO) | sed -E 's_.+:([a-zA-Z0-9_\-]+)/([a-zA-Z0-9_\-]
 install link:
 	@npm $@
 
-test: spec.js
-	#@$(BIN)/mocha -b -R spec spec.js
+test:
+	@jsxx ./test.js > /dev/null
+	@#$(BIN)/mocha -b -R spec spec.js
 
 release-patch: test
 	@$(call release,patch)
