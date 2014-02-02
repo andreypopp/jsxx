@@ -1,6 +1,6 @@
 {
   "name": "jsxx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "JSX eXperimental",
   "main": "index.js",
   "bin": "./jsxx",
