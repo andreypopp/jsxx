@@ -50,110 +50,127 @@ var JSX_ATTRIBUTE_TRANSFORMS = {
   }
 };
 
+function renderChildren(traverse, children, path, state) {
+
+  children.forEach(function(child, index) {
+    utils.catchup(child.range[0], state);
+
+    var isLast = index === children.length - 1;
+
+    if (child.type === Syntax.Literal) {
+      renderXJSLiteral(child, isLast, state);
+    } else if (child.type === Syntax.XJSExpressionContainer) {
+      renderXJSExpressionContainer(traverse, child, isLast, path, state);
+    } else {
+      traverse(child, path, state);
+      if (!isLast) {
+        utils.append(',', state);
+        state.g.buffer = state.g.buffer.replace(/(\s*),$/, ',$1');
+      }
+    }
+
+    utils.catchup(child.range[1], state);
+  });
+}
+
 function visitReactTag(traverse, object, path, state) {
   var jsxObjIdent = utils.getDocblock(state).jsx;
 
-  utils.catchup(object.openingElement.range[0], state);
-
-  if (object.name.namespace) {
-    throw new Error(
-       'Namespace tags are not supported. ReactJSX is not XML.');
-  }
-
-  var isFallbackTag = FALLBACK_TAGS[object.name.name];
-  utils.append(
-    (isFallbackTag ? jsxObjIdent + '.' : '') + (object.name.name) + '(',
-    state
-  );
-
-  utils.move(object.name.range[1], state);
-
-  // if we don't have any attributes, pass in null
-  if (object.attributes.length === 0) {
-    utils.append('null', state);
-  }
-
-  // write attributes
-  object.attributes.forEach(function(attr, index) {
-    utils.catchup(attr.range[0], state);
-    if (attr.name.namespace) {
-      throw new Error(
-         'Namespace attributes are not supported. ReactJSX is not XML.');
-    }
-    var name = attr.name.name;
-    var isFirst = index === 0;
-    var isLast = index === object.attributes.length - 1;
-
-    if (isFirst) {
-      utils.append('{', state);
-    }
-
-    utils.append(quoteAttrName(name), state);
-    utils.append(':', state);
-
-    if (!attr.value) {
-      state.g.buffer += 'true';
-      state.g.position = attr.name.range[1];
-      if (!isLast) {
-        utils.append(',', state);
-      }
-    } else {
-      utils.move(attr.name.range[1], state);
-      // Use catchupWhiteSpace to skip over the '=' in the attribute
-      utils.catchupWhiteSpace(attr.value.range[0], state);
-      if (JSX_ATTRIBUTE_TRANSFORMS[attr.name.name]) {
-        utils.append(JSX_ATTRIBUTE_TRANSFORMS[attr.name.name](attr), state);
-        utils.move(attr.value.range[1], state);
-        if (!isLast) {
-          utils.append(',', state);
-        }
-      } else if (attr.value.type === Syntax.Literal) {
-        renderXJSLiteral(attr.value, isLast, state);
-      } else {
-        renderXJSExpressionContainer(traverse, attr.value, isLast, path, state);
-      }
-    }
-
-    if (isLast) {
-      utils.append('}', state);
-    }
-
-    utils.catchup(attr.range[1], state);
-  });
-
-  if (!object.selfClosing) {
-    utils.catchup(object.openingElement.range[1] - 1, state);
-    utils.move(object.openingElement.range[1], state);
-  }
 
   // filter out whitespace
   var childrenToRender = object.children.filter(function(child) {
     return !(child.type === Syntax.Literal &&
-             child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
+            child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
   });
-  
-  if (childrenToRender.length > 0) {
-    utils.append(', ', state);
 
-    childrenToRender.forEach(function(child, index) {
-      utils.catchup(child.range[0], state);
+  if (object.name.name === 'template') {
 
-      var isLast = index === childrenToRender.length - 1;
+    utils.move(object.openingElement.range[1], state);
+    utils.append('function(state, props) { return [', state);
 
-      if (child.type === Syntax.Literal) {
-        renderXJSLiteral(child, isLast, state);
-      } else if (child.type === Syntax.XJSExpressionContainer) {
-        renderXJSExpressionContainer(traverse, child, isLast, path, state);
-      } else {
-        traverse(child, path, state);
+    if (childrenToRender.length > 0) {
+      renderChildren(traverse, childrenToRender, path, state);
+    }
+
+  } else {
+
+    utils.catchup(object.openingElement.range[0], state);
+
+    if (object.name.namespace) {
+      throw new Error(
+        'Namespace tags are not supported. ReactJSX is not XML.');
+    }
+
+    var isFallbackTag = FALLBACK_TAGS[object.name.name];
+    utils.append(
+      (isFallbackTag ? jsxObjIdent + '.' : '') + (object.name.name) + '(',
+      state
+    );
+
+    utils.move(object.name.range[1], state);
+
+    // if we don't have any attributes, pass in null
+    if (object.attributes.length === 0) {
+      utils.append('null', state);
+    }
+
+    // write attributes
+    object.attributes.forEach(function(attr, index) {
+      utils.catchup(attr.range[0], state);
+      if (attr.name.namespace) {
+        throw new Error(
+          'Namespace attributes are not supported. ReactJSX is not XML.');
+      }
+      var name = attr.name.name;
+      var isFirst = index === 0;
+      var isLast = index === object.attributes.length - 1;
+
+      if (isFirst) {
+        utils.append('{', state);
+      }
+
+      utils.append(quoteAttrName(name), state);
+      utils.append(':', state);
+
+      if (!attr.value) {
+        state.g.buffer += 'true';
+        state.g.position = attr.name.range[1];
         if (!isLast) {
           utils.append(',', state);
-          state.g.buffer = state.g.buffer.replace(/(\s*),$/, ',$1');
+        }
+      } else {
+        utils.move(attr.name.range[1], state);
+        // Use catchupWhiteSpace to skip over the '=' in the attribute
+        utils.catchupWhiteSpace(attr.value.range[0], state);
+        if (JSX_ATTRIBUTE_TRANSFORMS[attr.name.name]) {
+          utils.append(JSX_ATTRIBUTE_TRANSFORMS[attr.name.name](attr), state);
+          utils.move(attr.value.range[1], state);
+          if (!isLast) {
+            utils.append(',', state);
+          }
+        } else if (attr.value.type === Syntax.Literal) {
+          renderXJSLiteral(attr.value, isLast, state);
+        } else {
+          renderXJSExpressionContainer(traverse, attr.value, isLast, path, state);
         }
       }
 
-      utils.catchup(child.range[1], state);
+      if (isLast) {
+        utils.append('}', state);
+      }
+
+      utils.catchup(attr.range[1], state);
     });
+
+    if (!object.selfClosing) {
+      utils.catchup(object.openingElement.range[1] - 1, state);
+      utils.move(object.openingElement.range[1], state);
+    }
+
+    if (childrenToRender.length > 0) {
+      utils.append(', ', state);
+      renderChildren(traverse, childrenToRender, path, state);
+    }
   }
 
   if (object.selfClosing) {
@@ -166,7 +183,11 @@ function visitReactTag(traverse, object, path, state) {
     utils.move(object.closingElement.range[1], state);
   }
 
-  utils.append(')', state);
+  if (object.name.name === 'template') {
+    utils.append('] }', state);
+  } else {
+    utils.append(')', state);
+  }
   return false;
 }
 
