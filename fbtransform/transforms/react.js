@@ -86,7 +86,7 @@ function visitReactTag(traverse, object, path, state) {
   if (object.name.name === 'template' && !object.name.namespace) {
 
     utils.move(object.openingElement.range[1], state);
-    utils.append('function(state, props) { return [', state);
+    utils.append('function(props, state) { return [', state);
 
     if (childrenToRender.length > 0) {
       renderChildren(traverse, childrenToRender, path, state);
