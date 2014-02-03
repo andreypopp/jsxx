@@ -75,7 +75,7 @@ function renderChildren(traverse, children, path, state) {
 
 function visitReactTag(traverse, object, path, state) {
   var jsxObjIdent = utils.getDocblock(state).jsx;
-
+  var scope = state.localScope.identifiers;
 
   // filter out whitespace
   var childrenToRender = object.children.filter(function(child) {
@@ -96,7 +96,9 @@ function visitReactTag(traverse, object, path, state) {
 
     utils.catchup(object.openingElement.range[0], state);
 
-    var isFallbackTag = FALLBACK_TAGS[object.name.name] && !object.name.namespace;
+    var isFallbackTag = !object.name.namespace &&
+      !scope[object.name.name] &&
+      FALLBACK_TAGS[object.name.name];
     utils.append(
       (isFallbackTag ? jsxObjIdent + '.' : '') +
       (object.name.namespace ? object.name.namespace + '.' : '') +
